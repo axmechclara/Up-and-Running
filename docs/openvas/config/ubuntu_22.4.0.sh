@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash 
 #
 # Libellux: Up and Running
 # GVM 22.04 (22.4.0) installation
@@ -7,7 +7,7 @@
 # Description: Pre-installation test for (GVM 22.04) 21.4.0 on Ubuntu 22.04 (Jammy Jellyfish)
 # Last updated: 2022-08-01
 #
-
+set -e
 # Install dependencies
 sudo apt-get update && \
 sudo apt-get -y upgrade && \
@@ -22,7 +22,12 @@ heimdal-dev dpkg rsync zip rpm nsis socat libbsd-dev snmp uuid-dev curl gpgsm \
 python3 python3-paramiko python3-lxml python3-defusedxml python3-pip python3-psutil python3-impacket \
 python3-setuptools python3-packaging python3-wrapt python3-cffi python3-redis python3-gnupg \
 xmlstarlet texlive-fonts-recommended texlive-latex-extra perl-base xml-twig-tools \
-libpaho-mqtt-dev python3-paho-mqtt mosquitto xmltoman doxygen
+python3-paho-mqtt mosquitto libmosquitto-dev mosquitto-dev xmltoman doxygen
+
+git clone https://github.com/eclipse/paho.mqtt.c.git
+pushd paho.mqtt.c
+make && make install
+popd
 
 # Create GVM user and group
 sudo useradd -r -M -U -G sudo -s /usr/sbin/nologin gvm && \
@@ -279,14 +284,15 @@ sudo mkdir -p $OPENVAS_GNUPG_HOME && \
 sudo cp -r /tmp/openvas-gnupg/* $OPENVAS_GNUPG_HOME/ && \
 sudo chown -R gvm:gvm $OPENVAS_GNUPG_HOME
 
-# visudo
-sudo visudo
+## visudo
+#sudo visudo
+export VISUDO_LINE=$(sudo grep -n %admin /etc/sudoers | cut -f 1 -d':')
+sudo sed -i "$(($VISUDO_LINE+1)) i %gvm ALL = NOPASSWD: /usr/local/sbin/openvas" /etc/sudoers
+## Allow members of group sudo to execute any command
+#%sudo   ALL=(ALL:ALL) ALL
 
-# Allow members of group sudo to execute any command
-%sudo   ALL=(ALL:ALL) ALL
-
-# allow users of the gvm group run openvas
-%gvm ALL = NOPASSWD: /usr/local/sbin/openvas
+## allow users of the gvm group run openvas
+#%gvm ALL = NOPASSWD: /usr/local/sbin/openvas
 
 # Start PostgreSQL
 sudo systemctl start postgresql@14-main.service
@@ -312,7 +318,7 @@ sudo gvmd --create-user=admin --password=admin
 
 ## Retrieve our administrators uuid
 sudo gvmd --get-users --verbose
-admin 0279ba6c-391a-472f-8cbd-1f6eb808823b
+#admin 0279ba6c-391a-472f-8cbd-1f6eb808823b
 
 ## Set the value using the administrators uuid
 sudo gvmd --modify-setting 78eceaec-3385-11ea-b237-28d24461215b --value UUID_HERE
