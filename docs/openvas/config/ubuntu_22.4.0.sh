@@ -284,15 +284,9 @@ sudo mkdir -p $OPENVAS_GNUPG_HOME && \
 sudo cp -r /tmp/openvas-gnupg/* $OPENVAS_GNUPG_HOME/ && \
 sudo chown -R gvm:gvm $OPENVAS_GNUPG_HOME
 
-## visudo
-#sudo visudo
+## Sudoers file
 export VISUDO_LINE=$(sudo grep -n %admin /etc/sudoers | cut -f 1 -d':')
 sudo sed -i "$(($VISUDO_LINE+1)) i %gvm ALL = NOPASSWD: /usr/local/sbin/openvas" /etc/sudoers
-## Allow members of group sudo to execute any command
-#%sudo   ALL=(ALL:ALL) ALL
-
-## allow users of the gvm group run openvas
-#%gvm ALL = NOPASSWD: /usr/local/sbin/openvas
 
 # Start PostgreSQL
 sudo systemctl start postgresql@14-main.service
@@ -314,14 +308,12 @@ exit
 sudo ldconfig
 
 # Create GVM admin
-sudo gvmd --create-user=admin --password=admin
+GVM_PASS=$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${1:-32};echo;)
+sudo gvmd --create-user=gvadmin --password=${GVM_PASS}
 
 ## Retrieve our administrators uuid
-sudo gvmd --get-users --verbose
-#admin 0279ba6c-391a-472f-8cbd-1f6eb808823b
-
-## Set the value using the administrators uuid
-sudo gvmd --modify-setting 78eceaec-3385-11ea-b237-28d24461215b --value UUID_HERE
+UUID=$(sudo gvmd --get-users --verbose | cut -f 2 -d' ')
+sudo gvmd --modify-setting 78eceaec-3385-11ea-b237-28d24461215b --value $UUID
 
 # NVT sync. This might take awhile.
 sudo -u gvm greenbone-nvt-sync
@@ -457,4 +449,6 @@ sudo systemctl status gvmd.service
 sudo systemctl status gsad.service
 
 # Visit the host e.g. https://192.168.0.1:9392 login and have fun!!
+# Using 'gvadmin' with 
+echo -n ${GVM_PASS}
 # If you enjoy the content feel free to help out and tip me at: https://fundof.me/libellux
