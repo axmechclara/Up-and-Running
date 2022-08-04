@@ -26,7 +26,7 @@ python3-paho-mqtt mosquitto libmosquitto-dev mosquitto-dev xmltoman doxygen
 
 git clone https://github.com/eclipse/paho.mqtt.c.git
 pushd paho.mqtt.c
-make && make install
+make && sudo make install
 popd
 
 # Create GVM user and group
